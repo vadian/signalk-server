@@ -109,9 +109,11 @@ export default class DeltaCache {
       true
     )
 
-    let deltas
+    let deltas: Delta[]
     if (leaf) {
       deltas = findDeltas(leaf).map(toDelta)
+    } else {
+      deltas = new Array<Delta>()
     }
 
     return this.buildFullFromDeltas(

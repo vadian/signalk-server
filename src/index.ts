@@ -47,7 +47,7 @@ import {
 } from './security.js'
 import { setupCors } from './cors'
 import SubscriptionManager from './subscriptionmanager'
-import { Delta } from './types'
+import { Context, Delta, Message, SourceRef } from './types'
 const debug = createDebug('signalk-server')
 
 const { StreamBundle } = require('./streambundle')
@@ -197,15 +197,12 @@ class Server {
     }
     app.activateSourcePriorities()
 
-    app.handleMessage = (providerId: string, data: any) => {
+    app.handleMessage = (providerId: string, data: Message) => {
       if (data && data.updates) {
         incDeltaStatistics(app, providerId)
 
-        if (
-          typeof data.context === 'undefined' ||
-          data.context === 'vessels.self'
-        ) {
-          data.context = 'vessels.' + app.selfId
+        if (data.context === undefined || data.context === 'vessels.self') {
+          data.context = ('vessels.' + app.selfId) as Context
         }
         const now = new Date()
         data.updates.forEach((update: Delta) => {
@@ -216,11 +213,11 @@ class Server {
             }
           } else {
             if (typeof update.$source === 'undefined') {
-              update.$source = providerId
+              update.$source = providerId as SourceRef
             }
           }
           if (!update.timestamp || app.config.overrideTimestampWithNow) {
-            update.timestamp = now.toISOString()
+            update.timestamp = now
           }
         })
         try {

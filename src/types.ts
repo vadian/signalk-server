@@ -61,6 +61,10 @@ export interface WithContext {
   context: Context
 }
 
+export interface WithTimestamp {
+  timestamp: Date
+}
+
 export type ContextMatcher = (_: WithContext) => boolean
 
 export interface NormalizedDelta extends WithContext {
@@ -72,10 +76,12 @@ export interface NormalizedDelta extends WithContext {
 }
 
 export type Brand<K, T> = K & { __brand: T }
+export type Labelled<T> = { label: T }
 
 export type SourceRef = Brand<string, 'sourceRef'>
-export type Source = Brand<string, 'source'>
-export type Delta = any
+export type Source = Brand<string, 'source'> & Labelled<string>
+export type Delta = NormalizedDelta & WithTimestamp
+export type Message = { context: Context; updates: Delta[] }
 export type Path = Brand<string, 'path'>
 export type Context = Brand<string, 'context'>
 export type Value = object | number | string | null

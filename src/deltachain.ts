@@ -1,3 +1,5 @@
+import { Delta } from './types'
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type DeltaInputHandler = (
   delta: object,
@@ -5,18 +7,18 @@ export type DeltaInputHandler = (
 ) => void
 
 export default class DeltaChain {
-  chain: any
-  next: any
-  constructor(private dispatchMessage: any) {
+  chain: any[]
+  next: any[]
+  constructor(private dispatchMessage: (msg: Delta) => any) {
     this.chain = []
     this.next = []
   }
 
-  process(msg: any) {
+  process(msg: Delta) {
     return this.doProcess(0, msg)
   }
 
-  doProcess(index: number, msg: any) {
+  doProcess(index: number, msg: Delta) {
     if (index >= this.chain.length) {
       this.dispatchMessage(msg)
       return
