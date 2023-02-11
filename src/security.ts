@@ -32,7 +32,7 @@ import { Mode } from 'stat-mode'
 import { WithConfig } from './app'
 import { createDebug } from './debug'
 import dummysecurity from './dummysecurity'
-import { ICallback } from './types'
+import { Delta, ICallback } from './types'
 const debug = createDebug('signalk-server:security')
 
 export interface WithSecurityStrategy {
@@ -116,7 +116,7 @@ export interface SecurityStrategy {
   isDummy: () => boolean
   allowReadOnly: () => boolean
   shouldFilterDeltas: () => boolean
-  filterReadDelta: (user: any, delta: any) => any
+  filterReadDelta: (user: any, delta: Delta) => any
   configFromArguments: boolean
   securityConfig: any
   requestAccess: (config: any, request: any, ip: any, updateCb?: any) => any

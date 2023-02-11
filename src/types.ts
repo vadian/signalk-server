@@ -67,7 +67,7 @@ export interface WithTimestamp {
 
 export type ContextMatcher = (_: WithContext) => boolean
 
-export interface NormalizedDelta extends WithContext {
+export interface NormalizedDelta extends WithContext, WithTimestamp {
   $source: SourceRef
   source: Source
   path: Path
@@ -80,7 +80,7 @@ export type Labelled<T> = { label: T }
 
 export type SourceRef = Brand<string, 'sourceRef'>
 export type Source = Brand<string, 'source'> & Labelled<string>
-export type Delta = NormalizedDelta & WithTimestamp
+export type Delta = NormalizedDelta
 export type Message = { context: Context; updates: Delta[] }
 export type Path = Brand<string, 'path'>
 export type Context = Brand<string, 'context'>

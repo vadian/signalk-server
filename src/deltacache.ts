@@ -27,18 +27,18 @@ import {
   NormalizedDelta,
   SignalKServer,
   SourceRef,
-  StreamBundle
+  StreamBundle,
+  Value
 } from './types'
 
 interface StringKeyed {
-  [key: string]: any
+  [key: string]: NormalizedDelta | Value | StringKeyed
 }
 
 export default class DeltaCache {
   cache: StringKeyed = {}
   lastModifieds: StringKeyed = {}
   app: SignalKServer
-  defaults: any
   sourceDeltas: StringKeyed = {}
 
   constructor(app: SignalKServer, streambundle: StreamBundle) {
@@ -64,15 +64,17 @@ export default class DeltaCache {
     // debug(JSON.stringify(parts))
     const leaf = getLeafObject(this.cache, contextAndPathParts, true)
 
-    if (msg.path.length !== 0) {
-      leaf[sourceRef] = msg
-    } else if (msg.value) {
-      _.keys(msg.value).forEach((key) => {
-        if (!leaf[key]) {
-          leaf[key] = {}
-        }
-        leaf[key][sourceRef] = msg
-      })
+    if (leaf) {
+      if (msg.path.length !== 0) {
+        leaf[sourceRef] = msg
+      } else if (msg.value) {
+        _.keys(msg.value).forEach((key) => {
+          if (!leaf[key]) {
+            leaf[key] = {}
+          }
+          ;(leaf[key] as StringKeyed)[sourceRef] = msg
+        })
+      }
     }
     this.lastModifieds[msg.context] = Date.now()
   }
@@ -86,7 +88,7 @@ export default class DeltaCache {
     debug('Deleting context ' + contextKey)
     const contextParts = contextKey.split('.')
     if (contextParts.length === 2) {
-      delete this.cache[contextParts[0]][contextParts[1]]
+      delete (this.cache[contextParts[0]] as StringKeyed)[contextParts[1]]
     }
   }
 
@@ -94,7 +96,7 @@ export default class DeltaCache {
     debug('pruning contexts...')
     const threshold = Date.now() - seconds * 1000
     for (const contextKey in this.lastModifieds) {
-      if (this.lastModifieds[contextKey] < threshold) {
+      if ((this.lastModifieds[contextKey] ?? 0) < threshold) {
         this.deleteContext(contextKey)
         delete this.lastModifieds[contextKey]
       }
@@ -109,12 +111,9 @@ export default class DeltaCache {
       true
     )
 
-    let deltas: Delta[]
-    if (leaf) {
-      deltas = findDeltas(leaf).map(toDelta)
-    } else {
-      deltas = new Array<Delta>()
-    }
+    const deltas: Delta[] = leaf
+      ? findDeltas(leaf).map(toDelta)
+      : new Array<Delta>()
 
     return this.buildFullFromDeltas(
       user,
@@ -161,13 +160,13 @@ export default class DeltaCache {
       _.keys(this.cache[type]).forEach((id) => {
         const context = `${type}.${id}` as Context
         if (contextFilter({ context })) {
-          contexts.push(this.cache[type][id])
+          contexts.push((this.cache[type] as StringKeyed)[id] as Context)
         }
       })
     })
 
-    let deltas = contexts.reduce((acc: any[], context: Context) => {
-      let deltasToProcess
+    let deltas: Delta[] = contexts.reduce((acc: any[], context: Context) => {
+      let deltasToProcess: Delta[]
 
       if (key) {
         deltasToProcess = _.get(context, key)
@@ -236,7 +235,7 @@ function ensureHasDollarSource(normalizedDelta: NormalizedDelta): SourceRef {
 }
 
 function getLeafObject(
-  start: any,
+  start: StringKeyed,
   contextAndPathParts: string[],
   createIfMissing = false,
   returnLast = false
@@ -252,7 +251,7 @@ function getLeafObject(
         return returnLast ? current : null
       }
     }
-    current = current[p]
+    current = current[p] as StringKeyed
   }
   return current
 }
