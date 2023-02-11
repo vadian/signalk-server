@@ -1,15 +1,14 @@
-import { Delta } from './types'
+import { Delta, NormalizedDelta } from './types'
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export type DeltaInputHandler = (
-  delta: object,
-  next: (delta: object) => void
+  delta: NormalizedDelta,
+  next: DeltaInputHandler
 ) => void
 
 export default class DeltaChain {
-  chain: any[]
-  next: any[]
-  constructor(private dispatchMessage: (msg: Delta) => any) {
+  chain: DeltaInputHandler[]
+  next: DeltaInputHandler[]
+  constructor(private dispatchMessage: (msg: Delta) => void) {
     this.chain = []
     this.next = []
   }
@@ -39,8 +38,8 @@ export default class DeltaChain {
   }
 
   updateNexts() {
-    this.next = this.chain.map((chainElement: any, index: number) => {
-      return (msg: any) => {
+    this.next = this.chain.map((chainElement: unknown, index: number) => {
+      return (msg: NormalizedDelta) => {
         this.doProcess(index + 1, msg)
       }
     })
